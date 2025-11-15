@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FinSpecialisT</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#2D2D2D;        /* abu gelap elegan */
+    --panel:#3A3A3A;
+    --muted:#4A4A4A;
+    --accent:#1976D2;    /* biru professional */
+    --text:#FFFFFF;
+    --card-gap:12px;
+    --radius:6px;        /* rounded tipis */
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Montserrat',system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;color:var(--text);background:var(--bg)}
+  header.top{position:fixed;left:0;right:0;top:0;height:64px;background:transparent;display:flex;align-items:center;justify-content:center;padding:8px 16px;z-index:40}
+  .cart-icon{position:fixed;right:14px;top:14px;background:var(--panel);width:46px;height:46px;display:flex;align-items:center;justify-content:center;color:var(--text);border:1px solid var(--muted);cursor:pointer;border-radius:6px}
+  main{padding:84px 16px 24px;max-width:1100px;margin:0 auto}
+  /* LOBBY / HOME */
+  .lobby{display:flex;flex-direction:column;gap:18px;align-items:center}
+  .hero-box{width:min(440px,88vw);background:var(--panel);border:1px solid var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px;height:min(440px,88vw);aspect-ratio:1/1;border-radius:var(--radius)}
+  .logo-circle{width:36%;aspect-ratio:1/1;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;border:4px solid var(--accent);font-weight:700;font-size:1.15rem;color:var(--accent)}
+  .desc{margin-top:12px;text-align:center;color:var(--text);opacity:0.95}
+  hr.sep{width:100%;max-width:780px;border:none;border-top:1px solid var(--muted);margin:6px 0}
+  /* Menu buttons boxy 1:1-ish look by keeping square-like padding */
+  .menu-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:780px}
+  .menu-btn{background:var(--panel);border:1px solid var(--muted);padding:18px 12px;text-align:center;font-weight:700;color:var(--text);cursor:pointer;border-radius:var(--radius);height:96px;display:flex;align-items:center;justify-content:center}
+  .menu-btn.single{grid-column:span 3;height:56px}
+  /* Pages */
+  .page{display:none}
+  .page.active{display:block}
+  .page-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .page-title{font-weight:700;color:var(--accent)}
+  /* Grid 1:1 boxes */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:var(--card-gap)}
+  .card{background:var(--panel);border:1px solid var(--muted);display:flex;flex-direction:column;align-items:center;padding:8px;border-radius:var(--radius);overflow:hidden}
+  .card .thumb{width:100%;aspect-ratio:1/1;background:#222;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .card .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .card .meta{width:100%;padding-top:8px;display:flex;flex-direction:column;align-items:center}
+  .card .meta .name{font-weight:600}
+  .card .meta .price{font-size:0.9rem;opacity:0.95;margin-top:6px}
+  .card .meta .action{margin-top:8px}
+  .btn{background:var(--accent);border:1px solid var(--accent);color:#fff;padding:8px 10px;font-weight:700;cursor:pointer;border-radius:4px}
+  .btn.ghost{background:transparent;border:1px solid var(--muted);color:var(--text)}
+  /* Overlay for sticker view */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);display:none;align-items:center;justify-content:center;z-index:60}
+  .overlay.open{display:flex}
+  .overlay .imgwrap{background:var(--panel);padding:8px;border:1px solid var(--muted);max-width:86vw;max-height:86vh;border-radius:8px}
+  .overlay img{max-width:70vw;max-height:70vh;display:block;border-radius:6px}
+  /* Cart modal */
+  .cart-modal{position:fixed;right:12px;top:64px;background:var(--panel);border:1px solid var(--muted);padding:12px;width:340px;max-width:calc(100vw - 24px);display:none;z-index:70;border-radius:8px}
+  .cart-modal.open{display:block}
+  .cart-item{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--muted)}
+  footer{margin-top:28px;padding:18px;text-align:center;background:transparent;border-top:1px solid var(--muted)}
+  footer .socials{margin-top:8px}
+  a.social{color:var(--accent);margin:0 8px;font-weight:600}
+  /* responsive tweaks */
+  @media (max-width:640px){
+    .menu-grid{grid-template-columns:repeat(2,1fr)}
+    .menu-btn.single{grid-column:span 2}
+    .hero-box{width:92vw;height:92vw}
+    .logo-circle{width:46%}
+    .cart-modal{right:8px;left:8px;width:auto}
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <div style="position:relative;width:100%;max-width:1100px;display:flex;align-items:center;justify-content:center">
+    <div style="position:absolute;right:14px;top:10px;">
+      <div class="cart-icon" id="cartBtn" title="Keranjang (klik)">🛒 <span id="cartCount" style="margin-left:6px;font-weight:700">0</span></div>
+    </div>
+    <div style="text-align:center;">&nbsp;</div>
+  </div>
+</header>
+
+<main>
+  <!-- HOME / LOBBY -->
+  <section id="home" class="lobby page active">
+    <div class="hero-box">
+      <div class="logo-circle">FS</div>
+      <div class="desc" style="margin-top:10px">FinSpecialisT — Koleksi ikan hias & perlengkapan berkualitas</div>
+    </div>
+
+    <hr class="sep">
+
+    <div class="menu-grid">
+      <div class="menu-btn" onclick="openPage('molly')">MOLLY</div>
+      <div class="menu-btn" onclick="openPage('guppy')">GUPPY</div>
+      <div class="menu-btn" onclick="openPage('cupang')">CUPANG</div>
+      <div class="menu-btn" onclick="openPage('ikanlain')">IKAN LAIN</div>
+      <div class="menu-btn" onclick="openPage('perlengkapan')">PERLENGKAPAN</div>
+      <div class="menu-btn" onclick="openPage('sticker')">SPECIALIST STICKER</div>
+    </div>
+
+    <hr class="sep">
+
+    <div style="width:100%;max-width:720px;text-align:center">
+      <div class="menu-btn single" onclick="openPage('bantuan')">Bantuan & Informasi</div>
+    </div>
+
+    <hr class="sep">
+
+    <div style="text-align:center;opacity:0.95">
+      Hubungi kami:
+      <a class="social" href="https://wa.me/6281234567890" target="_blank">WhatsApp</a>
+      <a class="social" href="https://instagram.com/fin_specialist" target="_blank">Instagram</a>
+      <a class="social" href="https://tiktok.com/@fin_specialist" target="_blank">TikTok</a>
+      <a class="social" href="https://facebook.com/fin.specialist" target="_blank">Facebook</a>
+    </div>
+  </section>
+
+  <!-- PAGE: MOLLY -->
+  <section id="molly" class="page">
+    <div class="page-header"><div class="page-title">Etalase: Molly</div><div><button class="btn ghost" onclick="openPage('home')">Kembali</button></div></div>
+    <div class="grid" id="grid-molly">
+      <!-- 10 kotak 1:1 -->
+      <div class="card" data-category="fish" data-sub="molly" data-price-remaja="20000" data-price-indukan="60000">
+        <div class="thumb"><img src="images/ikan1.jpg" alt="Molly 1"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="fish" data-sub="molly" data-price-remaja="18000" data-price-indukan="54000">
+        <div class="thumb"><img src="images/ikan2.jpg" alt="Molly 2"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="fish" data-sub="molly" data-price-remaja="15000" data-price-indukan="45000">
+        <div class="thumb"><img src="images/ikan3.jpg" alt="Molly 3"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="fish" data-sub="molly" data-price-remaja="12000" data-price-indukan="36000">
+        <div class="thumb"><img src="images/ikan4.jpg" alt="Molly 4"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="fish" data-sub="molly" data-price-remaja="14000" data-price-indukan="42000">
+        <div class="thumb"><img src="images/ikan5.jpg" alt="Molly 5"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="fish" data-sub="molly" data-price-remaja="13000" data-price-indukan="39000">
+        <div class="thumb"><img src="images/ikan6.jpg" alt="Molly 6"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="fish" data-sub="molly" data-price-remaja="16000" data-price-indukan="48000">
+        <div class="thumb"><img src="images/ikan7.jpg" alt="Molly 7"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="fish" data-sub="molly" data-price-remaja="17000" data-price-indukan="51000">
+        <div class="thumb"><img src="images/ikan8.jpg" alt="Molly 8"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="fish" data-sub="molly" data-price-remaja="19000" data-price-indukan="57000">
+        <div class="thumb"><img src="images/ikan9.jpg" alt="Molly 9"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="fish" data-sub="molly" data-price-remaja="11000" data-price-indukan="33000">
+        <div class="thumb"><img src="images/ikan10.jpg" alt="Molly 10"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE: GUPPY -->
+  <section id="guppy" class="page">
+    <div class="page-header"><div class="page-title">Etalase: Guppy</div><div><button class="btn ghost" onclick="openPage('home')">Kembali</button></div></div>
+    <div class="grid" id="grid-guppy">
+      <div class="card" data-category="fish" data-sub="guppy" data-price-remaja="12000" data-price-indukan="36000">
+        <div class="thumb"><img src="images/guppy1.jpg" alt="Guppy 1"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="fish" data-sub="guppy" data-price-remaja="11000" data-price-indukan="33000">
+        <div class="thumb"><img src="images/guppy2.jpg" alt="Guppy 2"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="fish" data-sub="guppy" data-price-remaja="10000" data-price-indukan="30000">
+        <div class="thumb"><img src="images/guppy3.jpg" alt="Guppy 3"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="fish" data-sub="guppy" data-price-remaja="9000" data-price-indukan="27000">
+        <div class="thumb"><img src="images/guppy4.jpg" alt="Guppy 4"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE: CUPANG -->
+  <section id="cupang" class="page">
+    <div class="page-header"><div class="page-title">Etalase: Cupang</div><div><button class="btn ghost" onclick="openPage('home')">Kembali</button></div></div>
+    <div class="grid" id="grid-cupang">
+      <div class="card" data-category="fish" data-sub="cupang" data-price-remaja="25000" data-price-indukan="75000">
+        <div class="thumb"><img src="images/cupang1.jpg" alt="Cupang 1"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="fish" data-sub="cupang" data-price-remaja="22000" data-price-indukan="66000">
+        <div class="thumb"><img src="images/cupang2.jpg" alt="Cupang 2"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE: IKAN LAIN -->
+  <section id="ikanlain" class="page">
+    <div class="page-header"><div class="page-title">Etalase: Ikan Lain</div><div><button class="btn ghost" onclick="openPage('home')">Kembali</button></div></div>
+    <div class="grid" id="grid-ikanlain">
+      <!-- contoh kosong (kamu bisa tambahkan) -->
+      <div class="card" data-category="fish">
+        <div class="thumb"><img src="images/ikanlain1.jpg" alt="Ikan Lain 1"></div>
+        <div class="meta"><div class="name">Rename</div><div class="price">Rp 1.000 - 20.000</div><div class="action"><button class="btn" onclick="selectVariant(this)">Tambah ke Keranjang</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE: PERLENGKAPAN -->
+  <section id="perlengkapan" class="page">
+    <div class="page-header"><div class="page-title">Etalase: Perlengkapan</div><div><button class="btn ghost" onclick="openPage('home')">Kembali</button></div></div>
+    <div class="grid" id="grid-perlengkapan">
+      <div class="card" data-category="gear">
+        <div class="thumb"><img src="images/item1.jpg" alt="Filter"></div>
+        <div class="meta"><div class="name">Filter Air</div><div class="price">Rp 10.000</div><div class="action"><button class="btn" onclick="addToCartDirect('Filter Air',10000)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="gear">
+        <div class="thumb"><img src="images/item2.jpg" alt="Pompa"></div>
+        <div class="meta"><div class="name">Pompa Air</div><div class="price">Rp 15.000</div><div class="action"><button class="btn" onclick="addToCartDirect('Pompa Air',15000)">Tambah ke Keranjang</button></div></div>
+      </div>
+      <div class="card" data-category="gear">
+        <div class="thumb"><img src="images/item3.jpg" alt="Dekor"></div>
+        <div class="meta"><div class="name">Dekorasi</div><div class="price">Rp 8.000</div><div class="action"><button class="btn" onclick="addToCartDirect('Dekorasi',8000)">Tambah ke Keranjang</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE: STICKER -->
+  <section id="sticker" class="page">
+    <div class="page-header"><div class="page-title">SpecialisT Sticker</div><div><button class="btn ghost" onclick="openPage('home')">Kembali</button></div></div>
+    <div class="grid" id="grid-sticker">
+      <div class="card" data-category="sticker" data-type="normal">
+        <div class="thumb"><img src="images/sticker1.jpg" alt="Series 001"></div>
+        <div class="meta"><div class="name">Series #001</div><div class="price">Series</div><div class="action"><button class="btn" onclick="openSticker(this)">Lihat</button></div></div>
+      </div>
+      <div class="card" data-category="sticker" data-type="epic">
+        <div class="thumb"><img src="images/sticker2.jpg" alt="Series 002"></div>
+        <div class="meta"><div class="name">Series #002</div><div class="price">Series</div><div class="action"><button class="btn" onclick="openSticker(this)">Lihat</button></div></div>
+      </div>
+      <div class="card" data-category="sticker" data-type="collector">
+        <div class="thumb"><img src="images/sticker3.jpg" alt="Series 003"></div>
+        <div class="meta"><div class="name">Series #003</div><div class="price">Series</div><div class="action"><button class="btn" onclick="openSticker(this)">Lihat</button></div></div>
+      </div>
+      <div class="card" data-category="sticker" data-type="normal">
+        <div class="thumb"><img src="images/sticker4.jpg" alt="Series 004"></div>
+        <div class="meta"><div class="name">Series #004</div><div class="price">Series</div><div class="action"><button class="btn" onclick="openSticker(this)">Lihat</button></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE: BANTUAN -->
+  <section id="bantuan" class="page">
+    <div class="page-header"><div class="page-title">Bantuan & Informasi</div><div><button class="btn ghost" onclick="openPage('home')">Kembali</button></div></div>
+    <div style="line-height:1.6">
+      <h3>Panduan Pemesanan</h3>
+      <p>- Pilih menu jenis ikan atau perlengkapan di halaman utama.</p>
+      <p>- Buka etalase pilihan (misal: Molly) lalu pilih item yang diinginkan.</p>
+      <p>- Tekan tombol <strong>Tambah ke Keranjang</strong>. Untuk ikan, akan muncul pilihan varian <em>Remaja</em> atau <em>Indukan</em>; pilih salah satu untuk menetapkan harga.</p>
+      <p>- Setelah selesai memilih, buka ikon keranjang di pojok kanan atas untuk melihat pesanan.</p>
+      <p>- Tekan <strong>Checkout via WhatsApp</strong> → pesan order akan otomatis terisi dan terbuka di WhatsApp untuk dikirim ke admin.</p>
+      <h3>Garansi</h3>
+      <p>- Garansi DOA (Dead on Arrival) berlaku 2 jam setelah paket diterima jika pembeli mengirimkan <em>video unboxing</em> tanpa jeda.</p>
+      <p>- Penggantian akan diproses apabila bukti video valid dan sesuai ketentuan.</p>
+      <p>- Garansi tidak berlaku jika kelalaian perawatan pembeli terbukti atau video tidak lengkap.</p>
+      <h3>Bonus</h3>
+      <p>- Bonus berubah sesuai promosi. Contoh: beli 10 ekor → bonus 1 ekor. Beli paket indukan → bonus pakan. Beli stiker → bonus random sticker.</p>
+      <hr style="border:none;border-top:1px solid var(--muted);margin:12px 0">
+      <p>Jika ada pertanyaan lebih lanjut, silakan hubungi sosial media kami melalui tombol di halaman utama.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- OVERLAY IMAGE VIEW -->
+<div class="overlay" id="overlay" onclick="closeOverlay()">
+  <div class="imgwrap" onclick="event.stopPropagation()"><img id="ovimg" src="" alt=""></div>
+</div>
+
+<!-- CART MODAL -->
+<div class="cart-modal" id="cartModal">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><strong>Keranjang</strong><button class="btn ghost" onclick="closeCart()">Tutup</button></div>
+  <div id="cartList" style="max-height:260px;overflow:auto"></div>
+  <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center"><strong>Total</strong><strong id="cartTotal">Rp0</strong></div>
+  <div style="margin-top:10px;text-align:center"><button class="btn" onclick="checkout()">Checkout via WhatsApp</button></div>
+</div>
+
+<footer>
+  <div style="font-weight:700">FinSpecialisT</div>
+  <div style="opacity:0.9">Farm & Display - Kediri, Indonesia</div>
+  <div class="socials" style="margin-top:10px">
+    <a class="social" href="https://wa.me/6281234567890" target="_blank">WhatsApp</a>
+    <a class="social" href="https://instagram.com/fin_specialist" target="_blank">Instagram</a>
+    <a class="social" href="https://tiktok.com/@fin_specialist" target="_blank">TikTok</a>
+    <a class="social" href="https://facebook.com/fin.specialist" target="_blank">Facebook</a>
+  </div>
+  <div style="margin-top:10px;opacity:0.8">© 2025 FinSpecialisT</div>
+</footer>
+
+<script>
+// --- Navigation (single-file pages) ---
+function openPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const el = document.getElementById(id);
+  if(el) el.classList.add('active');
+  window.scrollTo(0,0);
+}
+openPage('home');
+
+// --- Sticker overlay ---
+function openSticker(btn){
+  const card = btn.closest('.card');
+  const img = card.querySelector('img').src;
+  document.getElementById('ovimg').src = img;
+  document.getElementById('overlay').classList.add('open');
+}
+function openStickerBySrc(src){
+  document.getElementById('ovimg').src = src;
+  document.getElementById('overlay').classList.add('open');
+}
+function closeOverlay(){ document.getElementById('overlay').classList.remove('open'); }
+
+// --- Cart logic (localStorage) ---
+let cart = JSON.parse(localStorage.getItem('fins_cart')||'[]');
+function saveCart(){ localStorage.setItem('fins_cart', JSON.stringify(cart)); renderCart(); }
+function renderCart(){
+  document.getElementById('cartCount').textContent = cart.length;
+  const list = document.getElementById('cartList'); list.innerHTML='';
+  let total = 0;
+  cart.forEach((it,idx)=>{
+    const div = document.createElement('div'); div.className='cart-item';
+    div.innerHTML = `<div style="max-width:70%">${it.name}<br><small style="opacity:0.9">${it.variant||''}</small></div><div>Rp${it.price}</div>`;
+    list.appendChild(div);
+    total += Number(it.price||0);
+  });
+  document.getElementById('cartTotal').textContent = 'Rp'+total;
+}
+renderCart();
+document.getElementById('cartBtn').addEventListener('click', ()=>{ document.getElementById('cartModal').classList.toggle('open'); });
+
+// direct add for gear (no variant)
+function addToCartDirect(name, price){
+  cart.push({name:name, price:price});
+  saveCart();
+  alert(name + ' ditambahkan ke keranjang');
+}
+
+// fish: select variant (Remaja/Indukan) using a small modal prompt
+function selectVariant(btn){
+  const card = btn.closest('.card');
+  const name = card.querySelector('.name').textContent || 'Item';
+  // read data attributes (supports attribute names with hyphen)
+  const priceR = Number(card.getAttribute('data-price-remaja') || card.getAttribute('data-price-remaja') || card.dataset.priceRemaja || 0);
+  const priceI = Number(card.getAttribute('data-price-indukan') || card.dataset.priceIndukan || 0);
+  // Ask variant by prompt (simple)
+  const choice = prompt("Pilih varian: ketik 'R' untuk Remaja atau 'I' untuk Indukan", 'R');
+  if(!choice) return;
+  if(choice.toUpperCase()==='I'){
+    cart.push({name:name, variant:'Indukan', price:priceI});
+  } else {
+    cart.push({name:name, variant:'Remaja', price:priceR});
+  }
+  saveCart();
+  alert(name + ' berhasil ditambahkan ke keranjang');
+}
+
+// Checkout via WhatsApp (prefilled message)
+function checkout(){
+  if(!cart.length){ alert('Keranjang kosong'); return; }
+  const buyer = prompt('Nama pembeli:','');
+  const addr = prompt('Alamat / Kota:','');
+  const phone = prompt('Nomor HP (contoh 0812...):','');
+  let msg = `Pesanan dari FinSpecialisT%0ANama: ${buyer||'-'}%0AAlamat: ${addr||'-'}%0ANo HP: ${phone||'-'}%0A%0APesanan:%0A`;
+  let total=0;
+  cart.forEach((it,i)=>{ msg += `${i+1}. ${it.name} ${it.variant?('('+it.variant+')'):''} - Rp${it.price}%0A`; total += Number(it.price||0); });
+  msg += `%0ATotal: Rp${total}%0A%0A*Mohon konfirmasi ketersediaan & pengiriman.*`;
+  const wa = '6281234567890'; // <<< GANTI NOMOR WA DI SINI (format internasional tanpa +)
+  const url = 'https://wa.me/' + wa + '?text=' + msg;
+  window.open(url, '_blank');
+  cart = []; saveCart(); document.getElementById('cartModal').classList.remove('open');
+}
+</script>
+</body>
+</html>
